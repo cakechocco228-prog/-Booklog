@@ -1,0 +1,1414 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Book Log</title>
+  <style>
+    :root{
+      --bg:#0b1020; --muted:#9fb0ff; --text:#eef2ff; --danger:#ff6b6b; --ok:#26d07c; --border:rgba(255,255,255,.12);
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,"Noto Sans Thai",sans-serif;
+      background:radial-gradient(1200px 800px at 20% 0%, rgba(122,162,255,.25), transparent 60%),
+                 radial-gradient(1000px 700px at 90% 20%, rgba(38,208,124,.18), transparent 55%),
+                 var(--bg);
+      color:var(--text);
+      padding:24px;
+    }
+    .container{max-width:1120px;margin:0 auto}
+    .row{display:grid;grid-template-columns:1fr 1.15fr;gap:16px}
+    @media (max-width:980px){.row{grid-template-columns:1fr}}
+    .card{
+      background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+      border:1px solid var(--border);
+      border-radius:16px;
+      padding:16px;
+      box-shadow:0 12px 28px rgba(0,0,0,.35);
+      backdrop-filter:blur(6px);
+    }
+    h1{font-size:22px;margin:0 0 10px}
+    h2{font-size:18px;margin:0 0 10px}
+    label{display:block;font-size:13px;color:rgba(238,242,255,.8);margin-bottom:6px}
+    input[type="text"], textarea, select{
+      width:100%;
+      padding:10px 12px;
+      border-radius:12px;
+      border:1px solid var(--border);
+      background:rgba(0,0,0,.18);
+      color:var(--text);
+      outline:none;
+    }
+    textarea{min-height:92px;resize:vertical}
+    .btn{
+      border:1px solid var(--border);
+      background:rgba(122,162,255,.16);
+      color:var(--text);
+      padding:10px 12px;
+      border-radius:12px;
+      cursor:pointer;
+      font-weight:700;
+      white-space:nowrap;
+    }
+    .btn:hover{background:rgba(122,162,255,.26)}
+    .btn.secondary{background:rgba(255,255,255,.06)}
+    .btn.secondary:hover{background:rgba(255,255,255,.12)}
+    .btn.danger{background:rgba(255,107,107,.18)}
+    .btn.danger:hover{background:rgba(255,107,107,.28)}
+    .btn.ok{background:rgba(38,208,124,.16)}
+    .btn.ok:hover{background:rgba(38,208,124,.26)}
+    .inline{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+    .muted{color:rgba(238,242,255,.7);font-size:13px}
+    .msg{margin-top:10px;padding:10px 12px;border-radius:12px;border:1px solid var(--border)}
+    .msg.ok{background:rgba(38,208,124,.12)}
+    .msg.err{background:rgba(255,107,107,.12)}
+    .divider{height:1px;background:var(--border);margin:12px 0}
+    .stars{display:inline-flex;gap:6px;user-select:none}
+    .star{
+      font-size:22px;line-height:1;cursor:pointer;
+      filter:drop-shadow(0 2px 10px rgba(0,0,0,.25));
+      opacity:.55;transition:transform .05s ease, opacity .1s ease;
+    }
+    .star.active{opacity:1}
+    .star:hover{transform:scale(1.06);opacity:.9}
+
+    table{width:100%;border-collapse:collapse}
+    th,td{padding:10px 10px;border-bottom:1px solid var(--border);vertical-align:top}
+    th{
+      text-align:left;font-size:13px;color:rgba(238,242,255,.75);
+      position:sticky;top:0;background:rgba(11,16,32,.65);backdrop-filter:blur(6px);
+    }
+    td{font-size:14px}
+    .pill{
+      display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;
+      border:1px solid var(--border);background:rgba(0,0,0,.16);font-size:12px;color:rgba(238,242,255,.82);
+    }
+    .pill.ok{border-color:rgba(38,208,124,.35);background:rgba(38,208,124,.10)}
+    .pill.todo{border-color:rgba(255,255,255,.18)}
+    .right{text-align:right}
+    .small{font-size:12px;color:rgba(238,242,255,.72)}
+    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    @media (max-width:560px){.grid2{grid-template-columns:1fr}}
+    #scannerWrap{display:none}
+    #reader{
+      width:100%;border-radius:14px;overflow:hidden;border:1px solid var(--border);
+      background:rgba(0,0,0,.18);padding:10px;
+    }
+    .cover-preview{
+      width:56px;height:72px;border-radius:10px;border:1px solid var(--border);
+      background:rgba(0,0,0,.18);object-fit:cover;display:block;
+    }
+    .topbar{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+    .langbox{display:flex;gap:8px;align-items:center}
+    .langbox select{width:auto;min-width:160px}
+  
+    /* Responsive list: turn table into cards on small screens */
+    @media (max-width: 760px){
+      table, thead, tbody, th, td, tr { display: block; }
+      thead { display: none; }
+      tbody tr{
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 10px;
+        margin-bottom: 10px;
+        background: rgba(0,0,0,.10);
+      }
+      tbody td{
+        border: none;
+        padding: 8px 8px;
+        display: grid;
+        grid-template-columns: 120px 1fr;
+        gap: 10px;
+        align-items: start;
+      }
+      tbody td::before{
+        content: attr(data-label);
+        font-weight: 700;
+        font-size: 12px;
+        color: rgba(238,242,255,.78);
+      }
+      tbody td.right{ text-align: left; }
+      .cover-preview{ width: 64px; height: 84px; }
+    }
+
+  </style>
+</head>
+
+<body>
+  <div class="container">
+
+    <!-- PAGE 1: LOGIN -->
+    <div id="pageLogin" class="card">
+      <div class="topbar">
+        <div>
+          <h1 id="ui_appTitle_login">📚 โปรแกรมบันทึกหนังสือที่เคยซื้อ</h1>
+          <p class="muted" id="ui_loginSubtitle">
+            เข้าสู่ระบบด้วย Username เท่านั้น (ข้อมูลจะแยกตามผู้ใช้)
+            <br>เงื่อนไข: Username ต้องยาวอย่างน้อย 4 ตัวอักษร และมีตัวพิมพ์ใหญ่ A–Z อย่างน้อย 1 ตัว
+          </p>
+        </div>
+
+        <div class="langbox">
+          <label for="langSelectLogin" class="muted" style="margin:0" id="ui_languageLabel_login">ภาษา</label>
+          <select id="langSelectLogin">
+            <option value="th">ไทย</option>
+            <option value="en-US">English (US)</option>
+          </select>
+        </div>
+      </div>
+
+      <div>
+        <label for="username" id="ui_usernameLabel_login">Username</label>
+        <input id="username" type="text" placeholder="เช่น CakeChocco (อย่างน้อย 4 ตัวอักษร และมี A–Z อย่างน้อย 1 ตัว)" />
+      </div>
+
+      <div class="inline" style="margin-top:12px;">
+        <button class="btn" id="btnLogin">Log in</button>
+      </div>
+
+      
+
+      <div class="msg ok" id="accessNote" style="margin-top:12px;">
+        ✅ หากเผยแพร่ไฟล์นี้บนเว็บ (https://) ทุกคนจะเข้าใช้ได้จากอุปกรณ์ใดก็ได้ (มือถือ/แท็บเล็ต/คอม) และหน้าจอจะปรับรูปแบบอัตโนมัติให้เหมาะกับอุปกรณ์
+      </div>
+
+<div id="loginMsg"></div>
+    </div>
+
+    <!-- PAGE 2: APP -->
+    <div id="pageApp" style="display:none;">
+      <div class="inline" style="justify-content: space-between; margin: 18px 0 10px;">
+        <h1 style="margin:0;" id="ui_appHeader">📝 หน้าบันทึกข้อมูลหนังสือ</h1>
+        <div class="inline">
+          <div class="langbox">
+            <label for="langSelectApp" class="muted" style="margin:0" id="ui_languageLabel_app">ภาษา</label>
+            <select id="langSelectApp">
+              <option value="th">ไทย</option>
+              <option value="en-US">English (US)</option>
+            </select>
+          </div>
+          <span class="pill" id="ui_userPill">ผู้ใช้: <b id="who"></b></span>
+          <button class="btn secondary" id="btnLogout">Log out</button>
+        </div>
+      </div>
+
+      <div class="row">
+        <!-- LEFT: Form -->
+        <div class="card">
+          <h2 id="ui_formTitle">เพิ่ม/แก้ไขรายการหนังสือ</h2>
+          <div class="inline" style="justify-content: space-between;">
+            <div class="pill" id="ui_scanPill">สแกนบาร์โค้ด/ISBN เพื่อเติมชื่อหนังสือและผู้เขียนอัตโนมัติ</div>
+            <div class="inline">
+              <button class="btn secondary" id="btnStartScan">เริ่มสแกน</button>
+              <button class="btn danger" id="btnStopScan" style="display:none;">หยุดสแกน</button>
+            </div>
+          </div>
+
+          <div id="scannerWrap" style="margin-top: 10px;">
+            <div id="reader"></div>
+            <div class="small" style="margin-top:8px;" id="ui_cameraHint">
+              * กล้องใช้งานได้ดีเมื่อเปิดผ่าน <b>https://</b> หรือ <b>localhost</b>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="grid2">
+            <div>
+              <label for="bookTitle" id="ui_bookTitleLabel">ชื่อหนังสือ</label>
+              <input id="bookTitle" type="text" placeholder="เช่น Pharmacotherapy Handbook" />
+            </div>
+            <div>
+              <label for="bookAuthor" id="ui_bookAuthorLabel">ชื่อนักเขียน</label>
+              <input id="bookAuthor" type="text" placeholder="เช่น Wells, Dipiro, Schwinghammer" />
+            </div>
+          </div>
+
+          <div class="grid2" style="margin-top: 12px;">
+            <div>
+              <label id="ui_readStatusLabel">สถานะการอ่าน</label>
+              <div class="inline">
+                <input id="readAlready" type="checkbox" />
+                <label for="readAlready" style="margin:0;" id="ui_readAlreadyCheckbox">อ่านแล้ว</label>
+              </div>
+              <div class="small" id="ui_unreadRule">ถ้ายังไม่อ่าน: ไม่ต้องให้คะแนน/ความคิดเห็น</div>
+            </div>
+            <div>
+              <label id="ui_ratingLabel">ให้คะแนน (เต็ม 5 ดาว)</label>
+              <div class="inline">
+                <div id="starBar" class="stars" aria-label="star rating"></div>
+                <span class="pill" id="starValue">0/5</span>
+              </div>
+              <div class="small" id="ratingHint"></div>
+            </div>
+          </div>
+
+          <div style="margin-top: 12px;">
+            <label for="comment" id="ui_commentLabel">ความคิดเห็นต่อหนังสือ</label>
+            <textarea id="comment" placeholder="พิมพ์ความคิดเห็น..."></textarea>
+          </div>
+
+          <div style="margin-top: 12px;">
+            <label for="coverFile" id="ui_coverLabel">อัปโหลดรูปปก (jpg/png/webp)</label>
+            <input id="coverFile" type="file" accept="image/*" />
+            <div class="inline" style="margin-top:10px;">
+              <img id="coverPreview" class="cover-preview" alt="cover preview" />
+              <div class="muted" id="ui_coverHint">พรีวิวรูปปก (จะถูกบันทึกไปกับรายการ)</div>
+              <button class="btn secondary" id="btnRemoveCover" type="button">ลบรูปปก</button>
+            </div>
+          </div>
+
+          <div class="inline" style="margin-top: 14px;">
+            <button class="btn ok" id="btnSave">บันทึก</button>
+            <button class="btn secondary" id="btnClear">ล้างฟอร์ม</button>
+            <span class="pill" id="modePill">โหมด: <b>เพิ่มใหม่</b></span>
+          </div>
+
+          <div id="saveMsg"></div>
+        </div>
+
+        <!-- RIGHT: Summary + Search/Filter + List -->
+        <div class="card">
+          <h2 id="ui_listTitle">สรุป & รายการที่บันทึกแล้ว</h2>
+
+          <div class="inline" style="gap:8px; margin-bottom: 12px;">
+            <span class="pill" id="ui_totalPill">📦 หนังสือทั้งหมด: <b id="sumTotal">0</b></span>
+            <span class="pill ok" id="ui_readPill">✅ อ่านแล้ว: <b id="sumRead">0</b></span>
+            <span class="pill todo" id="ui_unreadPill">🕒 ยังไม่อ่าน: <b id="sumUnread">0</b></span>
+          </div>
+
+          <div class="grid2" style="margin-bottom: 10px;">
+            <div>
+              <label for="searchBox" id="ui_searchLabel">ค้นหา (ชื่อหนังสือ/ผู้เขียน/ความคิดเห็น)</label>
+              <input id="searchBox" type="text" placeholder="พิมพ์เพื่อค้นหา..." />
+            </div>
+            <div>
+              <label for="statusFilter" id="ui_filterLabel">กรองตามสถานะ</label>
+              <select id="statusFilter">
+                <option value="all">ทั้งหมด</option>
+                <option value="read">อ่านแล้ว</option>
+                <option value="unread">ยังไม่อ่าน</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="inline" style="justify-content: space-between; margin-bottom: 10px;">
+            <div class="inline">
+              <button class="btn" id="btnExportXlsx">ส่งออกเป็น Excel (.xlsx)</button>
+              <button class="btn secondary" id="btnExportCsv">ส่งออกเป็น CSV</button>
+            </div>
+            <button class="btn danger" id="btnWipeAll">ลบข้อมูลทั้งหมด</button>
+          </div>
+
+          <div class="muted" style="margin-bottom: 10px;" id="ui_storageHint">
+            ข้อมูลถูกเก็บในเครื่อง (localStorage) ของเบราว์เซอร์ และแยกตามผู้ใช้
+          </div>
+
+          <div style="overflow:auto; max-height: 520px;">
+            <table>
+              <thead>
+                <tr>
+                  <th id="ui_th_cover">รูป</th>
+                  <th id="ui_th_title">ชื่อหนังสือ</th>
+                  <th id="ui_th_author">ผู้เขียน</th>
+                  <th id="ui_th_status">สถานะ</th>
+                  <th id="ui_th_rating">คะแนน</th>
+                  <th id="ui_th_comment">ความคิดเห็น</th>
+                  <th class="right" id="ui_th_actions">จัดการ</th>
+                </tr>
+              </thead>
+              <tbody id="bookTable"></tbody>
+            </table>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Libraries -->
+  <script src="https://unpkg.com/html5-qrcode"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+  <script>
+    // ====== I18N ======
+    const LANG_KEY = "book_log_lang_v1";
+    const I18N = {
+      "th": {
+        docTitle: "โปรแกรมบันทึกหนังสือที่เคยซื้อ",
+        appTitleLogin: "📚 โปรแกรมบันทึกหนังสือที่เคยซื้อ",
+        loginSubtitle: "เข้าสู่ระบบด้วย Username เท่านั้น (ข้อมูลจะแยกตามผู้ใช้)\nเงื่อนไข: Username ต้องยาวอย่างน้อย 4 ตัวอักษร และมีตัวพิมพ์ใหญ่ A–Z อย่างน้อย 1 ตัว",
+        languageLabel: "ภาษา",
+        usernameLabel: "Username",
+        usernamePh: "เช่น CakeChocco (อย่างน้อย 4 ตัวอักษร และมี A–Z อย่างน้อย 1 ตัว)",
+        loginBtn: "Log in",
+        logoutBtn: "Log out",
+
+        appHeader: "📝 หน้าบันทึกข้อมูลหนังสือ",
+        userPill: "ผู้ใช้:",
+        formTitle: "เพิ่ม/แก้ไขรายการหนังสือ",
+        scanPill: "สแกนบาร์โค้ด/ISBN เพื่อเติมชื่อหนังสือและผู้เขียนอัตโนมัติ",
+        startScan: "เริ่มสแกน",
+        stopScan: "หยุดสแกน",
+        cameraHint: "* กล้องใช้งานได้ดีเมื่อเปิดผ่าน https:// หรือ localhost",
+
+        bookTitleLabel: "ชื่อหนังสือ",
+        bookTitlePh: "เช่น Pharmacotherapy Handbook",
+        bookAuthorLabel: "ชื่อนักเขียน",
+        bookAuthorPh: "เช่น Wells, Dipiro, Schwinghammer",
+
+        readStatusLabel: "สถานะการอ่าน",
+        readAlready: "อ่านแล้ว",
+        unreadRule: "ถ้ายังไม่อ่าน: ไม่ต้องให้คะแนน/ความคิดเห็น",
+
+        ratingLabel: "ให้คะแนน (เต็ม 5 ดาว)",
+        ratingHintUnread: "* ให้คะแนนได้เมื่อ “อ่านแล้ว” เท่านั้น",
+        commentLabel: "ความคิดเห็นต่อหนังสือ",
+        commentPhRead: "พิมพ์ความคิดเห็น...",
+        commentPhUnread: "ยังไม่อ่าน (ไม่ต้องให้ความคิดเห็น)",
+
+        coverLabel: "อัปโหลดรูปปก (jpg/png/webp)",
+        coverHint: "พรีวิวรูปปก (จะถูกบันทึกไปกับรายการ)",
+        removeCover: "ลบรูปปก",
+
+        save: "บันทึก",
+        update: "อัปเดต",
+        clearForm: "ล้างฟอร์ม",
+        modeAdd: "โหมด: เพิ่มใหม่",
+        modeEdit: "โหมด: แก้ไข",
+
+        listTitle: "สรุป & รายการที่บันทึกแล้ว",
+        totalPill: "📦 หนังสือทั้งหมด:",
+        readPill: "✅ อ่านแล้ว:",
+        unreadPill: "🕒 ยังไม่อ่าน:",
+
+        searchLabel: "ค้นหา (ชื่อหนังสือ/ผู้เขียน/ความคิดเห็น)",
+        searchPh: "พิมพ์เพื่อค้นหา...",
+        filterLabel: "กรองตามสถานะ",
+        filterAll: "ทั้งหมด",
+        filterRead: "อ่านแล้ว",
+        filterUnread: "ยังไม่อ่าน",
+
+        exportXlsx: "ส่งออกเป็น Excel (.xlsx)",
+        exportCsv: "ส่งออกเป็น CSV",
+        wipeAll: "ลบข้อมูลทั้งหมด",
+        storageHint: "ข้อมูลถูกเก็บในเครื่อง (localStorage) ของเบราว์เซอร์ และแยกตามผู้ใช้",
+
+        thCover: "รูป",
+        thTitle: "ชื่อหนังสือ",
+        thAuthor: "ผู้เขียน",
+        thStatus: "สถานะ",
+        thRating: "คะแนน",
+        thComment: "ความคิดเห็น",
+        thActions: "จัดการ",
+
+        statusRead: "อ่านแล้ว",
+        statusUnread: "ยังไม่อ่าน",
+        noCover: "ไม่มีรูป",
+        isbn: "ISBN:",
+        created: "เพิ่ม:",
+        updated: "แก้ไข:",
+        noResults: "ไม่พบรายการ (ลองปรับตัวกรอง/คำค้นหา)",
+
+        actionEdit: "แก้ไข",
+        actionToggle: "สลับสถานะ",
+        actionDelete: "ลบ",
+
+        ratingNA: "ยังไม่ให้คะแนน",
+        dash: "—",
+
+        // messages
+        errNeedUsername: "กรุณากรอก Username",
+        errUsernameRule: "Username ต้องยาวอย่างน้อย 4 ตัวอักษร และมีตัวพิมพ์ใหญ่ (A–Z) อย่างน้อย 1 ตัว",
+        msgLoggedOut: "ออกจากระบบแล้ว",
+        errNeedTitleAuthor: "กรุณากรอกชื่อหนังสือและชื่อนักเขียนให้ครบ",
+        errNeedRatingRead: "กรุณาให้คะแนนอย่างน้อย 1 ดาว (เฉพาะหนังสือที่อ่านแล้ว)",
+        errEditNotFound: "ไม่พบรายการที่จะแก้ไข (อาจถูกลบไปแล้ว)",
+        msgUpdated: "อัปเดตรายการเรียบร้อย ✅",
+        msgSaved: "บันทึกเรียบร้อย ✅",
+
+        confirmWipe: "ต้องการลบข้อมูลทั้งหมดของผู้ใช้ \"{user}\" จริงหรือไม่?",
+        errNoExportData: "ยังไม่มีข้อมูลให้ส่งออก",
+        msgExportXlsxOk: "ส่งออก Excel แล้ว ✅",
+        msgExportCsvOk: "ส่งออก CSV แล้ว ✅",
+
+        errCoverTooBig: "ไฟล์รูปใหญ่เกินไป แนะนำไม่เกิน ~800KB",
+        msgCoverUploaded: "อัปโหลดรูปปกแล้ว ✅",
+
+        scanGot: "สแกนได้: {code} กำลังค้นหาข้อมูล...",
+        scanNotFound: "ค้นหาข้อมูลไม่พบในฐานข้อมูล (ลองพิมพ์เอง หรือสแกนใหม่)",
+        scanFilled: "เติมข้อมูลอัตโนมัติแล้ว ✅ (ISBN: {isbn})",
+        scanFetchErr: "เกิดข้อผิดพลาดในการดึงข้อมูลหนังสือ (เช็คอินเทอร์เน็ต)",
+
+        camNotFound: "ไม่พบกล้องบนอุปกรณ์นี้",
+        camNoPermission: "เปิดกล้องไม่ได้ (อาจต้องใช้ https หรืออนุญาตสิทธิ์กล้อง)",
+        scanning: "กำลังสแกน... เอาหนังสือ/บาร์โค้ดเข้าเฟรม"
+      },
+
+      "en-US": {
+        docTitle: "Book Purchase Log",
+        appTitleLogin: "📚 Book Purchase Log",
+        loginSubtitle: "Sign in with username only (data is separated per user).\nRules: Username must be at least 4 characters and include at least one uppercase letter (A–Z).",
+        languageLabel: "Language",
+        usernameLabel: "Username",
+        usernamePh: "e.g., CakeChocco (min 4 chars + at least 1 uppercase A–Z)",
+        loginBtn: "Log in",
+        logoutBtn: "Log out",
+
+        appHeader: "📝 Book Entry",
+        userPill: "User:",
+        formTitle: "Add / Edit a book",
+        scanPill: "Scan a barcode/ISBN to auto-fill title and author",
+        startScan: "Start scan",
+        stopScan: "Stop scan",
+        cameraHint: "* Camera works best on https:// or localhost",
+
+        bookTitleLabel: "Book title",
+        bookTitlePh: "e.g., Pharmacotherapy Handbook",
+        bookAuthorLabel: "Author",
+        bookAuthorPh: "e.g., Wells, Dipiro, Schwinghammer",
+
+        readStatusLabel: "Reading status",
+        readAlready: "Read",
+        unreadRule: "If unread: no rating or review required",
+
+        ratingLabel: "Rating (max 5 stars)",
+        ratingHintUnread: "* Rating is available only when marked as “Read”",
+        commentLabel: "Review",
+        commentPhRead: "Type your review...",
+        commentPhUnread: "Unread (no review needed)",
+
+        coverLabel: "Upload cover image (jpg/png/webp)",
+        coverHint: "Cover preview (saved with the entry)",
+        removeCover: "Remove cover",
+
+        save: "Save",
+        update: "Update",
+        clearForm: "Clear form",
+        modeAdd: "Mode: Add new",
+        modeEdit: "Mode: Edit",
+
+        listTitle: "Summary & Saved books",
+        totalPill: "📦 Total:",
+        readPill: "✅ Read:",
+        unreadPill: "🕒 Unread:",
+
+        searchLabel: "Search (title/author/review)",
+        searchPh: "Type to search...",
+        filterLabel: "Filter by status",
+        filterAll: "All",
+        filterRead: "Read",
+        filterUnread: "Unread",
+
+        exportXlsx: "Export Excel (.xlsx)",
+        exportCsv: "Export CSV",
+        wipeAll: "Delete all data",
+        storageHint: "Data is stored locally (localStorage) and separated per user",
+
+        thCover: "Cover",
+        thTitle: "Title",
+        thAuthor: "Author",
+        thStatus: "Status",
+        thRating: "Rating",
+        thComment: "Review",
+        thActions: "Actions",
+
+        statusRead: "Read",
+        statusUnread: "Unread",
+        noCover: "No cover",
+        isbn: "ISBN:",
+        created: "Added:",
+        updated: "Updated:",
+        noResults: "No items found (try changing the filter/search).",
+
+        actionEdit: "Edit",
+        actionToggle: "Toggle",
+        actionDelete: "Delete",
+
+        ratingNA: "Not rated",
+        dash: "—",
+
+        // messages
+        errNeedUsername: "Please enter a username.",
+        errUsernameRule: "Username must be at least 4 characters and include at least one uppercase letter (A–Z).",
+        msgLoggedOut: "Logged out.",
+        errNeedTitleAuthor: "Please fill in both book title and author.",
+        errNeedRatingRead: "Please give at least 1 star (only for books marked as Read).",
+        errEditNotFound: "Item to edit was not found (it may have been deleted).",
+        msgUpdated: "Updated successfully ✅",
+        msgSaved: "Saved successfully ✅",
+
+        confirmWipe: "Delete all data for user \"{user}\"?",
+        errNoExportData: "No data to export.",
+        msgExportXlsxOk: "Excel exported ✅",
+        msgExportCsvOk: "CSV exported ✅",
+
+        errCoverTooBig: "Cover image is too large. Recommended ≤ ~800KB.",
+        msgCoverUploaded: "Cover uploaded ✅",
+
+        scanGot: "Scanned: {code} — looking up book info...",
+        scanNotFound: "No book info found (you can type it manually or scan again).",
+        scanFilled: "Auto-filled ✅ (ISBN: {isbn})",
+        scanFetchErr: "Failed to fetch book info (check your internet).",
+
+        camNotFound: "No camera found on this device.",
+        camNoPermission: "Unable to open camera (use https or allow camera permission).",
+        scanning: "Scanning... Align the barcode/ISBN in the frame."
+      }
+    };
+
+    function getSavedLang(){
+      const v = localStorage.getItem(LANG_KEY);
+      return (v === "en-US" || v === "th") ? v : "th";
+    }
+    let currentLang = getSavedLang();
+
+    function tf(key, vars = {}){
+      const dict = I18N[currentLang] || I18N.th;
+      let s = (dict[key] ?? I18N.th[key] ?? key).toString();
+      for(const [k,v] of Object.entries(vars)){
+        s = s.replaceAll(`{${k}}`, String(v));
+      }
+      return s;
+    }
+
+    function setLang(lang){
+      currentLang = (lang === "en-US") ? "en-US" : "th";
+      localStorage.setItem(LANG_KEY, currentLang);
+
+      // update html lang attr
+      document.documentElement.lang = (currentLang === "en-US") ? "en" : "th";
+      document.title = tf("docTitle");
+
+      // sync selectors
+      langSelectLogin.value = currentLang;
+      langSelectApp.value = currentLang;
+
+      // login UI
+      ui_appTitle_login.textContent = tf("appTitleLogin");
+      ui_loginSubtitle.innerHTML = tf("loginSubtitle").replaceAll("\n", "<br>");
+      ui_languageLabel_login.textContent = tf("languageLabel");
+      ui_usernameLabel_login.textContent = tf("usernameLabel");
+      username.placeholder = tf("usernamePh");
+      btnLogin.textContent = tf("loginBtn");
+
+      // app header UI
+      ui_appHeader.textContent = tf("appHeader");
+      ui_languageLabel_app.textContent = tf("languageLabel");
+      ui_userPill.firstChild.textContent = tf("userPill") + " ";
+      btnLogout.textContent = tf("logoutBtn");
+
+      // form UI
+      ui_formTitle.textContent = tf("formTitle");
+      ui_scanPill.textContent = tf("scanPill");
+      btnStartScan.textContent = tf("startScan");
+      btnStopScan.textContent = tf("stopScan");
+      ui_cameraHint.innerHTML = tf("cameraHint").replaceAll("https://", "<b>https://</b>").replaceAll("localhost", "<b>localhost</b>");
+
+      ui_bookTitleLabel.textContent = tf("bookTitleLabel");
+      bookTitle.placeholder = tf("bookTitlePh");
+      ui_bookAuthorLabel.textContent = tf("bookAuthorLabel");
+      bookAuthor.placeholder = tf("bookAuthorPh");
+
+      ui_readStatusLabel.textContent = tf("readStatusLabel");
+      ui_readAlreadyCheckbox.textContent = tf("readAlready");
+      ui_unreadRule.textContent = tf("unreadRule");
+      ui_ratingLabel.textContent = tf("ratingLabel");
+      ui_commentLabel.textContent = tf("commentLabel");
+
+      ui_coverLabel.textContent = tf("coverLabel");
+      ui_coverHint.textContent = tf("coverHint");
+      btnRemoveCover.textContent = tf("removeCover");
+
+      btnClear.textContent = tf("clearForm");
+
+      // list UI
+      ui_listTitle.textContent = tf("listTitle");
+      ui_totalPill.childNodes[0].textContent = tf("totalPill") + " ";
+      ui_readPill.childNodes[0].textContent = tf("readPill") + " ";
+      ui_unreadPill.childNodes[0].textContent = tf("unreadPill") + " ";
+
+      ui_searchLabel.textContent = tf("searchLabel");
+      searchBox.placeholder = tf("searchPh");
+      ui_filterLabel.textContent = tf("filterLabel");
+
+      // filter options
+      statusFilter.querySelector('option[value="all"]').textContent = tf("filterAll");
+      statusFilter.querySelector('option[value="read"]').textContent = tf("filterRead");
+      statusFilter.querySelector('option[value="unread"]').textContent = tf("filterUnread");
+
+      btnExportXlsx.textContent = tf("exportXlsx");
+      btnExportCsv.textContent = tf("exportCsv");
+      btnWipeAll.textContent = tf("wipeAll");
+      ui_storageHint.textContent = tf("storageHint");
+
+      // table headers
+      ui_th_cover.textContent = tf("thCover");
+      ui_th_title.textContent = tf("thTitle");
+      ui_th_author.textContent = tf("thAuthor");
+      ui_th_status.textContent = tf("thStatus");
+      ui_th_rating.textContent = tf("thRating");
+      ui_th_comment.textContent = tf("thComment");
+      ui_th_actions.textContent = tf("thActions");
+
+      // mode + save/update button text based on state
+      refreshModePillAndSaveBtn();
+
+      // unread/read UI sync
+      syncReadStateUI();
+
+      // rerender list to translate table/action buttons
+      renderTable();
+    }
+
+    // ====== CONFIG ======
+    const STORAGE_PREFIX = "book_log_items_user_v1:"; // per-user key prefix
+
+    // ====== STATE ======
+    let currentUser = null;
+    let rating = 0;             // 0..5
+    let html5Qr = null;
+    let scanning = false;
+
+    // edit mode
+    let editId = null;          // string id or null
+    let currentCoverDataUrl = null; // base64 image dataURL or null
+
+    // ====== ELEMENTS ======
+    const pageLogin = document.getElementById("pageLogin");
+    const pageApp = document.getElementById("pageApp");
+    const loginMsg = document.getElementById("loginMsg");
+
+    const who = document.getElementById("who");
+    const btnLogin = document.getElementById("btnLogin");
+    const btnLogout = document.getElementById("btnLogout");
+
+    const username = document.getElementById("username");
+
+    const bookTitle = document.getElementById("bookTitle");
+    const bookAuthor = document.getElementById("bookAuthor");
+    const readAlready = document.getElementById("readAlready");
+    const comment = document.getElementById("comment");
+
+    const starBar = document.getElementById("starBar");
+    const starValue = document.getElementById("starValue");
+    const ratingHint = document.getElementById("ratingHint");
+
+    const btnSave = document.getElementById("btnSave");
+    const btnClear = document.getElementById("btnClear");
+    const saveMsg = document.getElementById("saveMsg");
+    const modePill = document.getElementById("modePill");
+
+    const sumTotal = document.getElementById("sumTotal");
+    const sumRead = document.getElementById("sumRead");
+    const sumUnread = document.getElementById("sumUnread");
+
+    const bookTable = document.getElementById("bookTable");
+    const btnWipeAll = document.getElementById("btnWipeAll");
+
+    const scannerWrap = document.getElementById("scannerWrap");
+    const btnStartScan = document.getElementById("btnStartScan");
+    const btnStopScan = document.getElementById("btnStopScan");
+
+    const searchBox = document.getElementById("searchBox");
+    const statusFilter = document.getElementById("statusFilter");
+
+    const coverFile = document.getElementById("coverFile");
+    const coverPreview = document.getElementById("coverPreview");
+    const btnRemoveCover = document.getElementById("btnRemoveCover");
+
+    const btnExportXlsx = document.getElementById("btnExportXlsx");
+    const btnExportCsv = document.getElementById("btnExportCsv");
+
+    // lang selectors
+    const langSelectLogin = document.getElementById("langSelectLogin");
+    const langSelectApp = document.getElementById("langSelectApp");
+
+    // ui label nodes
+    const ui_appTitle_login = document.getElementById("ui_appTitle_login");
+    const ui_loginSubtitle = document.getElementById("ui_loginSubtitle");
+    const ui_languageLabel_login = document.getElementById("ui_languageLabel_login");
+    const ui_usernameLabel_login = document.getElementById("ui_usernameLabel_login");
+
+    const ui_appHeader = document.getElementById("ui_appHeader");
+    const ui_languageLabel_app = document.getElementById("ui_languageLabel_app");
+    const ui_userPill = document.getElementById("ui_userPill");
+
+    const ui_formTitle = document.getElementById("ui_formTitle");
+    const ui_scanPill = document.getElementById("ui_scanPill");
+    const ui_cameraHint = document.getElementById("ui_cameraHint");
+
+    const ui_bookTitleLabel = document.getElementById("ui_bookTitleLabel");
+    const ui_bookAuthorLabel = document.getElementById("ui_bookAuthorLabel");
+
+    const ui_readStatusLabel = document.getElementById("ui_readStatusLabel");
+    const ui_readAlreadyCheckbox = document.getElementById("ui_readAlreadyCheckbox");
+    const ui_unreadRule = document.getElementById("ui_unreadRule");
+    const ui_ratingLabel = document.getElementById("ui_ratingLabel");
+    const ui_commentLabel = document.getElementById("ui_commentLabel");
+
+    const ui_coverLabel = document.getElementById("ui_coverLabel");
+    const ui_coverHint = document.getElementById("ui_coverHint");
+
+    const ui_listTitle = document.getElementById("ui_listTitle");
+    const ui_totalPill = document.getElementById("ui_totalPill");
+    const ui_readPill = document.getElementById("ui_readPill");
+    const ui_unreadPill = document.getElementById("ui_unreadPill");
+
+    const ui_searchLabel = document.getElementById("ui_searchLabel");
+    const ui_filterLabel = document.getElementById("ui_filterLabel");
+    const ui_storageHint = document.getElementById("ui_storageHint");
+
+    const ui_th_cover = document.getElementById("ui_th_cover");
+    const ui_th_title = document.getElementById("ui_th_title");
+    const ui_th_author = document.getElementById("ui_th_author");
+    const ui_th_status = document.getElementById("ui_th_status");
+    const ui_th_rating = document.getElementById("ui_th_rating");
+    const ui_th_comment = document.getElementById("ui_th_comment");
+    const ui_th_actions = document.getElementById("ui_th_actions");
+
+    // ====== HELPERS ======
+    function showMsg(el, type, text){
+      el.innerHTML = `<div class="msg ${type}">${text}</div>`;
+    }
+    function clearMsg(el){ el.innerHTML = ""; }
+
+    function escapeHtml(s){
+      return (s ?? "").toString()
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("'","&#039;");
+    }
+
+    // Username rules:
+    // - trim then length >= 4
+    // - contains at least 1 uppercase A-Z
+    function isValidUsername(u){
+      if(!u) return false;
+      const s = u.trim();
+      if(s.length < 4) return false;
+      if(!/[A-Z]/.test(s)) return false;
+      return true;
+    }
+
+    function userKeyPart(u){
+      return encodeURIComponent(u.trim());
+    }
+
+    function getStorageKey(){
+      if(!currentUser) return null;
+      return STORAGE_PREFIX + userKeyPart(currentUser);
+    }
+
+    function loadItems(){
+      const key = getStorageKey();
+      if(!key) return [];
+      try {
+        const raw = localStorage.getItem(key);
+        return raw ? JSON.parse(raw) : [];
+      } catch (e){
+        return [];
+      }
+    }
+    function saveItems(items){
+      const key = getStorageKey();
+      if(!key) return;
+      localStorage.setItem(key, JSON.stringify(items));
+    }
+
+    function starsText(n){
+      const filled = "★".repeat(n);
+      const empty = "☆".repeat(5-n);
+      return filled + empty;
+    }
+
+    function updateSummary(items){
+      const total = items.length;
+      const read = items.filter(x => x.read).length;
+      const unread = total - read;
+      sumTotal.textContent = total;
+      sumRead.textContent = read;
+      sumUnread.textContent = unread;
+    }
+
+    function refreshModePillAndSaveBtn(){
+      if(editId){
+        modePill.innerHTML = tf("modeEdit").replace(":", ": <b>").replace(/$/, "</b>").replace(": <b>แก้ไข</b>","โหมด: <b>แก้ไข</b>");
+        // Safer: build explicitly
+        modePill.innerHTML = (currentLang === "en-US")
+          ? `Mode: <b>Edit</b>`
+          : `โหมด: <b>แก้ไข</b>`;
+        btnSave.textContent = tf("update");
+      } else {
+        modePill.innerHTML = (currentLang === "en-US")
+          ? `Mode: <b>Add new</b>`
+          : `โหมด: <b>เพิ่มใหม่</b>`;
+        btnSave.textContent = tf("save");
+      }
+      btnSave.classList.add("ok");
+    }
+
+    function setModeAdd(){
+      editId = null;
+      refreshModePillAndSaveBtn();
+    }
+    function setModeEdit(){
+      refreshModePillAndSaveBtn();
+    }
+
+    function resetForm(){
+      bookTitle.value = "";
+      bookAuthor.value = "";
+      readAlready.checked = false;
+      comment.value = "";
+      setRating(0);
+      bookTitle.dataset.isbn = "";
+      clearCover();
+      clearMsg(saveMsg);
+      setModeAdd();
+      syncReadStateUI();
+    }
+
+    // ====== STARS UI ======
+    function buildStars(){
+      starBar.innerHTML = "";
+      for(let i=1;i<=5;i++){
+        const span = document.createElement("span");
+        span.className = "star";
+        span.textContent = "★";
+        span.title = `${i}`;
+        span.addEventListener("click", () => setRating(i));
+        starBar.appendChild(span);
+      }
+      paintStars();
+    }
+    function setRating(n){
+      rating = n;
+      paintStars();
+    }
+    function paintStars(){
+      const stars = [...starBar.querySelectorAll(".star")];
+      stars.forEach((s, idx) => s.classList.toggle("active", idx < rating));
+      starValue.textContent = `${rating}/5`;
+    }
+
+    // ====== unread => disable rating/comment ======
+    function syncReadStateUI(){
+      const isRead = readAlready.checked;
+
+      starBar.style.pointerEvents = isRead ? "auto" : "none";
+      starBar.style.opacity = isRead ? "1" : "0.45";
+      starValue.style.opacity = isRead ? "1" : "0.75";
+      ratingHint.textContent = isRead ? "" : tf("ratingHintUnread");
+
+      comment.disabled = !isRead;
+      comment.placeholder = isRead ? tf("commentPhRead") : tf("commentPhUnread");
+
+      if(!isRead){
+        setRating(0);
+        comment.value = "";
+      }
+    }
+
+    readAlready.addEventListener("change", () => {
+      syncReadStateUI();
+      clearMsg(saveMsg);
+    });
+
+    // ====== SEARCH + FILTER ======
+    function getFilteredItems(items){
+      const q = searchBox.value.trim().toLowerCase();
+      const sf = statusFilter.value; // all/read/unread
+      return items.filter(it => {
+        const statusOk =
+          sf === "all" ? true :
+          sf === "read" ? !!it.read :
+          sf === "unread" ? !it.read : true;
+
+        if(!statusOk) return false;
+        if(!q) return true;
+
+        const blob = `${it.title} ${it.author} ${it.comment ?? ""} ${it.isbn ?? ""}`.toLowerCase();
+        return blob.includes(q);
+      });
+    }
+
+    // ====== TABLE RENDER ======
+    function renderTable(){
+      if(!currentUser){
+        bookTable.innerHTML = "";
+        return;
+      }
+
+      const items = loadItems();
+      updateSummary(items);
+
+      const view = getFilteredItems(items);
+
+      if(view.length === 0){
+        bookTable.innerHTML = `<tr><td colspan="7" class="muted">${escapeHtml(tf("noResults"))}</td></tr>`;
+        return;
+      }
+
+      bookTable.innerHTML = view.map((it) => {
+        const statusPill = it.read
+          ? `<span class="pill ok">${escapeHtml(tf("statusRead"))}</span>`
+          : `<span class="pill todo">${escapeHtml(tf("statusUnread"))}</span>`;
+
+        const coverCell = it.coverDataUrl
+          ? `<img class="cover-preview" src="${it.coverDataUrl}" alt="cover">`
+          : `<div class="cover-preview" style="display:flex;align-items:center;justify-content:center;color:rgba(238,242,255,.55);font-size:12px;">${escapeHtml(tf("noCover"))}</div>`;
+
+        const isbnLine = it.isbn ? `<div class="small">${escapeHtml(tf("isbn"))} ${escapeHtml(it.isbn)}</div>` : "";
+        const timeLabel = it.updatedAt ? tf("updated") : tf("created");
+        const timeValue = it.updatedAt ? it.updatedAt : it.createdAt;
+        const timeLine = `<div class="small">${escapeHtml(timeLabel)} ${escapeHtml(new Date(timeValue).toLocaleString())}</div>`;
+
+        const ratingCell = it.read
+          ? `${escapeHtml(starsText(it.rating))}<div class="small">${escapeHtml(String(it.rating))}/5</div>`
+          : `${escapeHtml(tf("dash"))}<div class="small">${escapeHtml(tf("ratingNA"))}</div>`;
+
+        const commentCell = it.read
+          ? escapeHtml(it.comment || "")
+          : `<span class="small">${escapeHtml(tf("dash"))}</span>`;
+
+        return `
+          <tr>
+            <td>${coverCell}</td>
+            <td><b>${escapeHtml(it.title)}</b>${isbnLine}${timeLine}</td>
+            <td>${escapeHtml(it.author)}</td>
+            <td>${statusPill}</td>
+            <td>${ratingCell}</td>
+            <td>${commentCell}</td>
+            <td class="right">
+              <div class="inline" style="justify-content:flex-end;">
+                <button class="btn secondary" onclick="editRow('${it.id}')">${escapeHtml(tf("actionEdit"))}</button>
+                <button class="btn secondary" onclick="toggleRead('${it.id}')">${escapeHtml(tf("actionToggle"))}</button>
+                <button class="btn danger" onclick="deleteRow('${it.id}')">${escapeHtml(tf("actionDelete"))}</button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join("");
+    }
+
+    // expose to window
+    window.deleteRow = function(id){
+      const items = loadItems();
+      const next = items.filter(x => x.id !== id);
+      saveItems(next);
+      if(editId === id) resetForm();
+      renderTable();
+    };
+
+    // if toggled to unread => clear rating/comment
+    window.toggleRead = function(id){
+      const items = loadItems();
+      const idx = items.findIndex(x => x.id === id);
+      if(idx < 0) return;
+
+      items[idx].read = !items[idx].read;
+
+      if(!items[idx].read){
+        items[idx].rating = 0;
+        items[idx].comment = "";
+      }
+
+      items[idx].updatedAt = new Date().toISOString();
+      saveItems(items);
+
+      if(editId === id){
+        readAlready.checked = !!items[idx].read;
+        if(!items[idx].read){
+          setRating(0);
+          comment.value = "";
+        }
+        syncReadStateUI();
+      }
+
+      renderTable();
+    };
+
+    window.editRow = function(id){
+      const items = loadItems();
+      const it = items.find(x => x.id === id);
+      if(!it) return;
+
+      editId = id;
+      refreshModePillAndSaveBtn();
+      clearMsg(saveMsg);
+
+      bookTitle.value = it.title || "";
+      bookAuthor.value = it.author || "";
+      readAlready.checked = !!it.read;
+
+      setRating(Number(it.read ? (it.rating || 0) : 0));
+      comment.value = it.read ? (it.comment || "") : "";
+
+      bookTitle.dataset.isbn = it.isbn || "";
+
+      currentCoverDataUrl = it.coverDataUrl || null;
+      paintCoverPreview();
+
+      syncReadStateUI();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    };
+
+    // ====== COVER UPLOAD ======
+    function paintCoverPreview(){
+      if(currentCoverDataUrl){
+        coverPreview.src = currentCoverDataUrl;
+        coverPreview.style.visibility = "visible";
+      } else {
+        coverPreview.removeAttribute("src");
+        coverPreview.style.visibility = "hidden";
+      }
+    }
+
+    function clearCover(){
+      currentCoverDataUrl = null;
+      coverFile.value = "";
+      paintCoverPreview();
+    }
+
+    btnRemoveCover.addEventListener("click", clearCover);
+
+    coverFile.addEventListener("change", async (e) => {
+      const file = e.target.files?.[0];
+      if(!file) return;
+
+      if(file.size > 800 * 1024){
+        showMsg(saveMsg, "err", tf("errCoverTooBig"));
+        coverFile.value = "";
+        return;
+      }
+
+      const dataUrl = await fileToDataURL(file);
+      currentCoverDataUrl = dataUrl;
+      paintCoverPreview();
+      showMsg(saveMsg, "ok", tf("msgCoverUploaded"));
+    });
+
+    function fileToDataURL(file){
+      return new Promise((resolve, reject) => {
+        const r = new FileReader();
+        r.onload = () => resolve(r.result);
+        r.onerror = reject;
+        r.readAsDataURL(file);
+      });
+    }
+
+    // ====== LOGIN FLOW (username only) ======
+    function gotoApp(){
+      pageLogin.style.display = "none";
+      pageApp.style.display = "block";
+      who.textContent = currentUser;
+      renderTable();
+      resetForm();
+    }
+
+    function gotoLogin(){
+      pageApp.style.display = "none";
+      pageLogin.style.display = "block";
+      stopScan();
+      currentUser = null;
+      resetForm();
+    }
+
+    btnLogin.addEventListener("click", () => {
+      const u = username.value.trim();
+
+      if(!u){
+        showMsg(loginMsg, "err", tf("errNeedUsername"));
+        return;
+      }
+      if(!isValidUsername(u)){
+        showMsg(loginMsg, "err", tf("errUsernameRule"));
+        return;
+      }
+
+      currentUser = u;
+      clearMsg(loginMsg);
+      gotoApp();
+    });
+
+    btnLogout.addEventListener("click", () => {
+      gotoLogin();
+      showMsg(loginMsg, "ok", tf("msgLoggedOut"));
+    });
+
+    // ====== SAVE / UPDATE BOOK ======
+    btnSave.addEventListener("click", () => {
+      const title = bookTitle.value.trim();
+      const author = bookAuthor.value.trim();
+
+      if(!title || !author){
+        showMsg(saveMsg, "err", tf("errNeedTitleAuthor"));
+        return;
+      }
+
+      // rule:
+      // - read: rating required
+      // - unread: rating/comment not required (force empty)
+      if (readAlready.checked) {
+        if (rating === 0) {
+          showMsg(saveMsg, "err", tf("errNeedRatingRead"));
+          return;
+        }
+      } else {
+        setRating(0);
+        comment.value = "";
+      }
+
+      const items = loadItems();
+      const nowIso = new Date().toISOString();
+      const isbn = (bookTitle.dataset.isbn || "").trim() || null;
+
+      const finalRating = readAlready.checked ? rating : 0;
+      const finalComment = readAlready.checked ? comment.value.trim() : "";
+
+      if(editId){
+        const idx = items.findIndex(x => x.id === editId);
+        if(idx < 0){
+          showMsg(saveMsg, "err", tf("errEditNotFound"));
+          resetForm();
+          renderTable();
+          return;
+        }
+        items[idx] = {
+          ...items[idx],
+          title,
+          author,
+          read: readAlready.checked,
+          rating: finalRating,
+          comment: finalComment,
+          isbn,
+          coverDataUrl: currentCoverDataUrl,
+          updatedAt: nowIso
+        };
+        saveItems(items);
+        showMsg(saveMsg, "ok", tf("msgUpdated"));
+      } else {
+        const newItem = {
+          id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random().toString(16).slice(2),
+          title,
+          author,
+          read: readAlready.checked,
+          rating: finalRating,
+          comment: finalComment,
+          createdAt: nowIso,
+          updatedAt: null,
+          isbn,
+          coverDataUrl: currentCoverDataUrl
+        };
+        items.unshift(newItem);
+        saveItems(items);
+        showMsg(saveMsg, "ok", tf("msgSaved"));
+      }
+
+      renderTable();
+      resetForm();
+    });
+
+    btnClear.addEventListener("click", resetForm);
+
+    btnWipeAll.addEventListener("click", () => {
+      const ok = confirm(tf("confirmWipe", { user: currentUser }));
+      if(!ok) return;
+      const key = getStorageKey();
+      if(key) localStorage.removeItem(key);
+      renderTable();
+      resetForm();
+    });
+
+    // ====== EXPORT ======
+    function makeExportRows(items){
+      const isEN = currentLang === "en-US";
+      return items.map(it => {
+        if(isEN){
+          return {
+            "User": currentUser,
+            "ID": it.id,
+            "Title": it.title,
+            "Author": it.author,
+            "Read": it.read ? "Yes" : "No",
+            "Rating(1-5)": it.read ? it.rating : "",
+            "Review": it.read ? (it.comment || "") : "",
+            "ISBN": it.isbn || "",
+            "Added At": it.createdAt ? new Date(it.createdAt).toLocaleString() : "",
+            "Updated At": it.updatedAt ? new Date(it.updatedAt).toLocaleString() : "",
+            "Has Cover": it.coverDataUrl ? "Yes" : "No"
+          };
+        }
+        return {
+          "ผู้ใช้": currentUser,
+          "ID": it.id,
+          "ชื่อหนังสือ": it.title,
+          "ผู้เขียน": it.author,
+          "อ่านแล้ว": it.read ? "ใช่" : "ไม่ใช่",
+          "คะแนน(1-5)": it.read ? it.rating : "",
+          "ความคิดเห็น": it.read ? (it.comment || "") : "",
+          "ISBN": it.isbn || "",
+          "วันที่เพิ่ม": it.createdAt ? new Date(it.createdAt).toLocaleString() : "",
+          "วันที่แก้ไข": it.updatedAt ? new Date(it.updatedAt).toLocaleString() : "",
+          "มีรูปปก": it.coverDataUrl ? "ใช่" : "ไม่ใช่"
+        };
+      });
+    }
+
+    btnExportXlsx.addEventListener("click", () => {
+      const items = loadItems();
+      if(items.length === 0){
+        showMsg(saveMsg, "err", tf("errNoExportData"));
+        return;
+      }
+      const rows = makeExportRows(items);
+      const ws = XLSX.utils.json_to_sheet(rows);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Books");
+      XLSX.writeFile(wb, `book_log_${userKeyPart(currentUser)}.xlsx`);
+      showMsg(saveMsg, "ok", tf("msgExportXlsxOk"));
+    });
+
+    btnExportCsv.addEventListener("click", () => {
+      const items = loadItems();
+      if(items.length === 0){
+        showMsg(saveMsg, "err", tf("errNoExportData"));
+        return;
+      }
+      const rows = makeExportRows(items);
+      const ws = XLSX.utils.json_to_sheet(rows);
+      const csv = XLSX.utils.sheet_to_csv(ws);
+
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = `book_log_${userKeyPart(currentUser)}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      showMsg(saveMsg, "ok", tf("msgExportCsvOk"));
+    });
+
+    // ====== SEARCH/FILTER EVENTS ======
+    searchBox.addEventListener("input", renderTable);
+    statusFilter.addEventListener("change", renderTable);
+
+    // ====== BARCODE SCAN + LOOKUP (ISBN) ======
+    async function lookupIsbn(isbn){
+      const clean = (isbn || "").replaceAll(/[^0-9Xx]/g, "");
+      if(clean.length < 10) return null;
+
+      const url = `https://openlibrary.org/api/books?bibkeys=ISBN:${encodeURIComponent(clean)}&format=json&jscmd=data`;
+      const res = await fetch(url);
+      const data = await res.json();
+      const key = `ISBN:${clean}`;
+      if(!data[key]) return null;
+
+      const title = data[key].title || "";
+      const authors = (data[key].authors || []).map(a => a.name).filter(Boolean);
+      const author = authors.join(", ");
+
+      if(!title || !author) return null;
+      return { title, author, isbn: clean };
+    }
+
+    function onScanSuccess(decodedText){
+      stopScan();
+      showMsg(saveMsg, "ok", escapeHtml(tf("scanGot", { code: decodedText })));
+
+      lookupIsbn(decodedText)
+        .then(info => {
+          if(!info){
+            showMsg(saveMsg, "err", tf("scanNotFound"));
+            bookTitle.dataset.isbn = decodedText;
+            return;
+          }
+          bookTitle.value = info.title;
+          bookAuthor.value = info.author;
+          bookTitle.dataset.isbn = info.isbn;
+          showMsg(saveMsg, "ok", tf("scanFilled", { isbn: info.isbn }));
+        })
+        .catch(() => showMsg(saveMsg, "err", tf("scanFetchErr")));
+    }
+
+    async function startScan(){
+      if(scanning) return;
+      scanning = true;
+
+      scannerWrap.style.display = "block";
+      btnStartScan.style.display = "none";
+      btnStopScan.style.display = "inline-block";
+
+      clearMsg(saveMsg);
+
+      if(!html5Qr){
+        html5Qr = new Html5Qrcode("reader");
+      }
+
+      try {
+        const devices = await Html5Qrcode.getCameras();
+        const cameraId = devices?.[0]?.id;
+        if(!cameraId){
+          showMsg(saveMsg, "err", tf("camNotFound"));
+          scanning = false;
+          return;
+        }
+
+        await html5Qr.start(
+          cameraId,
+          { fps: 10, qrbox: { width: 250, height: 250 } },
+          (decodedText) => onScanSuccess(decodedText),
+          () => {}
+        );
+        showMsg(saveMsg, "ok", tf("scanning"));
+      } catch (e){
+        showMsg(saveMsg, "err", tf("camNoPermission"));
+        scanning = false;
+        btnStartScan.style.display = "inline-block";
+        btnStopScan.style.display = "none";
+      }
+    }
+
+    async function stopScan(){
+      if(!html5Qr || !scanning) {
+        scannerWrap.style.display = "none";
+        btnStartScan.style.display = "inline-block";
+        btnStopScan.style.display = "none";
+        scanning = false;
+        return;
+      }
+      try { await html5Qr.stop(); } catch(_) {}
+      scannerWrap.style.display = "none";
+      btnStartScan.style.display = "inline-block";
+      btnStopScan.style.display = "none";
+      scanning = false;
+    }
+
+    btnStartScan.addEventListener("click", startScan);
+    btnStopScan.addEventListener("click", stopScan);
+
+    // ====== LANG EVENTS ======
+    langSelectLogin.addEventListener("change", (e) => setLang(e.target.value));
+    langSelectApp.addEventListener("change", (e) => setLang(e.target.value));
+
+    // ====== INIT ======
+    buildStars();
+    clearCover();
+    setModeAdd();
+
+    // apply saved language + initial UI
+    setLang(currentLang);
+
+    // ensure initial placeholders/options are localized
+    statusFilter.value = "all";
+    renderTable();
+    resetForm();
+  </script>
+</body>
+</html>
